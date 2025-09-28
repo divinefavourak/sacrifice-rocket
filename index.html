@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargo or Survival</title>
+    <style>
+        :root {
+            --space-dark: #0b0b2d;
+            --space-blue: #1a1a4b;
+            --space-light: #2a2a6b;
+            --highlight: #4a9de3;
+            --danger: #e34a4a;
+            --success: #4ae37a;
+            --warning: #e3b84a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--space-dark), var(--space-blue));
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 1px solid var(--highlight);
+            box-shadow: 0 0 15px rgba(74, 157, 227, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--highlight);
+            text-shadow: 0 0 10px rgba(74, 157, 227, 0.7);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+        
+        .main-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--space-light);
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .space-journey {
+            position: relative;
+            height: 200px;
+            margin: 20px 0;
+            background: rgba(10, 10, 40, 0.3);
+            border-radius: 10px;
+            border: 1px solid var(--space-light);
+            overflow: hidden;
+        }
+        
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            z-index: 2;
+        }
+        
+        .start-planet {
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #4ae37a, #2a8b4a);
+            box-shadow: 0 0 20px #4ae37a;
+        }
+        
+        .destination-planet {
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #4a9de3, #2a4b8b);
+            box-shadow: 0 0 20px #4a9de3;
+        }
+        
+        .travel-path {
+            position: absolute;
+            left: 110px;
+            right: 130px;
+            top: 50%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-50%);
+        }
+        
+        .travel-path::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, var(--highlight), transparent);
+            animation: path-glow 2s infinite;
+        }
+        
+        @keyframes path-glow {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+            100% { opacity: 0.3; }
+        }
+        
+        .ship-container {
+            position: absolute;
+            left: 110px;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: left 2s ease-in-out;
+            z-index: 3;
+        }
+        
+        .ship {
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(90deg, #555, #777, #555);
+            border-radius: 5px 15px 15px 5px;
+            position: relative;
+            border: 2px solid #999;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        
+        .ship::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 20px;
+            background: #444;
+            border-radius: 3px;
+            top: 5px;
+            left: -8px;
+            border: 2px solid #777;
+        }
+        
+        .ship::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 12px;
+            background: #222;
+            border-radius: 2px;
+            top: 9px;
+            left: -12px;
+        }
+        
+        .engine {
+            position: absolute;
+            width: 15px;
+            height: 10px;
+            background: #222;
+            border-radius: 3px;
+            right: 5px;
+            top: 10px;
+        }
+        
+        .engine::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 5px;
+            background: var(--warning);
+            border-radius: 3px;
+            right: -18px;
+            top: 2.5px;
+            box-shadow: 0 0 10px var(--warning);
+            animation: engine-pulse 1s infinite;
+        }
+        
+        @keyframes engine-pulse {
+            0% { opacity: 0.7; width: 20px; }
+            50% { opacity: 1; width: 25px; }
+            100% { opacity: 0.7; width: 20px; }
+        }
+        
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+        
+        .status-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--space-light);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-value {
+            font-weight: bold;
+            color: var(--highlight);
+        }
+        
+        .fuel-bar-container {
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .fuel-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));
+            transition: width 0.5s;
+        }
+        
+        .distance-container {
+            margin-top: 10px;
+        }
+        
+        .distance-bar-container {
+            height: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .distance-bar {
+            height: 100%;
+            background: var(--highlight);
+            transition: width 0.5s;
+        }
+        
+        .ship-parts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .ship-part {
+            width: 80px;
+            height: 80px;
+            background: rgba(42, 42, 107, 0.7);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.8rem;
+            border: 1px solid var(--space-light);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .ship-part:hover {
+            transform: scale(1.05);
+            border-color: var(--highlight);
+        }
+        
+        .ship-part.jettisoned {
+            opacity: 0.3;
+            background: rgba(227, 74, 74, 0.3);
+            text-decoration: line-through;
+        }
+        
+        .ship-part-icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .decision-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--space-light);
+            margin-top: 20px;
+        }
+        
+        .decision-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--highlight);
+            text-align: center;
+        }
+        
+        .decision-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .decision-option {
+            background: rgba(42, 42, 107, 0.7);
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--space-light);
+            transition: all 0.3s;
+        }
+        
+        .decision-option:hover {
+            transform: translateY(-5px);
+            border-color: var(--highlight);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .decision-option h3 {
+            margin-bottom: 10px;
+            color: var(--highlight);
+        }
+        
+        .event-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--space-light);
+            margin-top: 20px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .event-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--warning);
+        }
+        
+        .event-description {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        
+        .event-choices {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .event-choice {
+            background: rgba(42, 42, 107, 0.7);
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid var(--space-light);
+            transition: all 0.3s;
+        }
+        
+        .event-choice:hover {
+            border-color: var(--highlight);
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+        }
+        
+        .game-over h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .game-over p {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        
+        .restart-btn {
+            background: var(--highlight);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .restart-btn:hover {
+            background: #3a8dd3;
+            transform: scale(1.05);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .cargo-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .jettison-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .jettison-btn:hover {
+            background: #d33a3a;
+        }
+        
+        .phase-indicator {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .phase {
+            padding: 10px 20px;
+            background: rgba(42, 42, 107, 0.7);
+            border-radius: 5px;
+            margin: 0 10px;
+            border: 1px solid var(--space-light);
+        }
+        
+        .phase.active {
+            border-color: var(--highlight);
+            background: rgba(74, 157, 227, 0.3);
+        }
+        
+        .cargo-floating {
+            position: absolute;
+            animation: float-away 2s forwards;
+            z-index: 10;
+        }
+        
+        @keyframes float-away {
+            0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+            100% { transform: translate(100px, -100px) rotate(180deg); opacity: 0; }
+        }
+        
+        .ship-damage {
+            position: absolute;
+            animation: explode 0.5s forwards;
+            z-index: 10;
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .decision-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .space-journey {
+                height: 150px;
+            }
+            
+            .planet {
+                font-size: 1.5rem;
+            }
+            
+            .start-planet {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .destination-planet {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>🚀 Cargo or Survival</h1>
+            <p class="subtitle">Sacrifice parts of your ship or cargo to survive the journey</p>
+        </header>
+        
+        <div class="phase-indicator">
+            <div class="phase" id="phase-decision">Decision Phase</div>
+            <div class="phase" id="phase-travel">Travel Phase</div>
+        </div>
+        
+        <div class="game-area">
+            <div class="main-panel">
+                <div class="space-journey" id="space-journey">
+                    <div class="planet start-planet">🌍</div>
+                    <div class="travel-path"></div>
+                    <div class="planet destination-planet">🪐</div>
+                    <div class="ship-container" id="ship-container">
+                        <div class="ship">
+                            <div class="engine"></div>
+                        </div>
+                    </div>
+                    <div class="stars" id="stars"></div>
+                </div>
+                
+                <div class="ship-parts" id="ship-parts">
+                    <!-- Ship parts will be generated here -->
+                </div>
+                
+                <div class="decision-panel" id="decision-panel">
+                    <h2 class="decision-title">What will you sacrifice to lighten the load?</h2>
+                    <div class="decision-options">
+                        <div class="decision-option" id="option-cargo">
+                            <h3>🗑️ Jettison Cargo</h3>
+                            <p>Lose potential score, but reduce weight significantly</p>
+                        </div>
+                        <div class="decision-option" id="option-parts">
+                            <h3>🔧 Sacrifice Ship Parts</h3>
+                            <p>Risk increased hazards, but reduce weight drastically</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="event-panel hidden" id="event-panel">
+                    <h2 class="event-title" id="event-title">Asteroid Field!</h2>
+                    <p class="event-description" id="event-description">Your ship is entering a dangerous asteroid field. Without shields, you'll take damage.</p>
+                    <div class="event-choices">
+                        <div class="event-choice" id="event-choice-1">Use extra fuel to navigate safely</div>
+                        <div class="event-choice" id="event-choice-2">Risk it and hope for the best</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-panel">
+                <h2>Ship Status</h2>
+                
+                <div class="status-item">
+                    <span>Fuel:</span>
+                    <span class="status-value" id="fuel-value">100%</span>
+                </div>
+                <div class="fuel-bar-container">
+                    <div class="fuel-bar" id="fuel-bar"></div>
+                </div>
+                
+                <div class="status-item">
+                    <span>Distance to Destination:</span>
+                    <span class="status-value" id="distance-value">0/100</span>
+                </div>
+                <div class="distance-bar-container">
+                    <div class="distance-bar" id="distance-bar"></div>
+                </div>
+                
+                <div class="status-item">
+                    <span>Weight:</span>
+                    <span class="status-value" id="weight-value">100%</span>
+                </div>
+                
+                <div class="status-item">
+                    <span>Cargo Delivered:</span>
+                    <span class="status-value" id="cargo-delivered">0/50</span>
+                </div>
+                
+                <div class="status-item">
+                    <span>Ship Integrity:</span>
+                    <span class="status-value" id="integrity-value">100%</span>
+                </div>
+                
+                <h3 style="margin-top: 20px;">Cargo Hold</h3>
+                <div id="cargo-list">
+                    <!-- Cargo items will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-over hidden" id="game-over">
+        <h2 id="game-over-title">Game Over</h2>
+        <p id="game-over-message">Your ship ran out of fuel before reaching the destination.</p>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button class="restart-btn" id="restart-btn">Play Again</button>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            fuel: 100,
+            maxFuel: 100,
+            distance: 0,
+            maxDistance: 100,
+            weight: 100,
+            cargoDelivered: 0,
+            cargoRequired: 50,
+            shipIntegrity: 100,
+            phase: 'decision', // 'decision' or 'travel'
+            cargo: [
+                { id: 1, name: "Food Supplies", value: 10, weight: 15, jettisoned: false },
+                { id: 2, name: "Medical Equipment", value: 20, weight: 10, jettisoned: false },
+                { id: 3, name: "Luxury Goods", value: 30, weight: 5, jettisoned: false },
+                { id: 4, name: "Construction Materials", value: 15, weight: 20, jettisoned: false },
+                { id: 5, name: "Scientific Instruments", value: 25, weight: 10, jettisoned: false }
+            ],
+            shipParts: [
+                { id: 1, name: "Shields", icon: "🛡️", weight: 15, active: true },
+                { id: 2, name: "Scanner", icon: "📡", weight: 10, active: true },
+                { id: 3, name: "Thrusters", icon: "🚀", weight: 20, active: true },
+                { id: 4, name: "Life Support", icon: "💨", weight: 15, active: true },
+                { id: 5, name: "Cargo Bay", icon: "📦", weight: 10, active: true }
+            ],
+            events: [
+                {
+                    title: "Asteroid Field!",
+                    description: "Your ship is entering a dangerous asteroid field. Without shields, you'll take damage.",
+                    choices: [
+                        { text: "Use extra fuel to navigate safely", fuelCost: 15, damage: 0 },
+                        { text: "Risk it and hope for the best", fuelCost: 5, damage: 30 }
+                    ]
+                },
+                {
+                    title: "Space Pirates!",
+                    description: "Pirates are demanding cargo. You can try to outrun them or negotiate.",
+                    choices: [
+                        { text: "Use thrusters to escape", fuelCost: 20, cargoLoss: 0 },
+                        { text: "Negotiate and give up some cargo", fuelCost: 5, cargoLoss: 2 }
+                    ]
+                },
+                {
+                    title: "Gravity Well",
+                    description: "Your ship is caught in a gravity well. You need extra power to break free.",
+                    choices: [
+                        { text: "Use maximum thrust", fuelCost: 25, damage: 0 },
+                        { text: "Try a risky maneuver", fuelCost: 10, damage: 15 }
+                    ]
+                }
+            ],
+            currentEvent: null,
+            score: 0
+        };
+
+        // DOM Elements
+        const fuelValue = document.getElementById('fuel-value');
+        const fuelBar = document.getElementById('fuel-bar');
+        const distanceValue = document.getElementById('distance-value');
+        const distanceBar = document.getElementById('distance-bar');
+        const weightValue = document.getElementById('weight-value');
+        const cargoDelivered = document.getElementById('cargo-delivered');
+        const integrityValue = document.getElementById('integrity-value');
+        const shipPartsContainer = document.getElementById('ship-parts');
+        const cargoList = document.getElementById('cargo-list');
+        const decisionPanel = document.getElementById('decision-panel');
+        const eventPanel = document.getElementById('event-panel');
+        const eventTitle = document.getElementById('event-title');
+        const eventDescription = document.getElementById('event-description');
+        const eventChoice1 = document.getElementById('event-choice-1');
+        const eventChoice2 = document.getElementById('event-choice-2');
+        const gameOverScreen = document.getElementById('game-over');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const finalScore = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const optionCargo = document.getElementById('option-cargo');
+        const optionParts = document.getElementById('option-parts');
+        const phaseDecision = document.getElementById('phase-decision');
+        const phaseTravel = document.getElementById('phase-travel');
+        const shipContainer = document.getElementById('ship-container');
+        const spaceJourney = document.getElementById('space-journey');
+        const starsContainer = document.getElementById('stars');
+
+        // Initialize the game
+        function initGame() {
+            updateUI();
+            renderShipParts();
+            renderCargo();
+            createStars();
+            updateShipPosition();
+            
+            // Event listeners
+            optionCargo.addEventListener('click', () => showCargoSelection());
+            optionParts.addEventListener('click', () => showPartsSelection());
+            eventChoice1.addEventListener('click', () => handleEventChoice(0));
+            eventChoice2.addEventListener('click', () => handleEventChoice(1));
+            restartBtn.addEventListener('click', resetGame);
+        }
+
+        // Create background stars
+        function createStars() {
+            starsContainer.innerHTML = '';
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = `${Math.random() * 3 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 3}s`;
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Update ship position based on distance
+        function updateShipPosition() {
+            const journeyWidth = spaceJourney.offsetWidth - 140; // Account for planet sizes
+            const progress = gameState.distance / gameState.maxDistance;
+            const newPosition = 110 + (journeyWidth * progress);
+            shipContainer.style.left = `${newPosition}px`;
+        }
+
+        // Update the UI with current game state
+        function updateUI() {
+            // Update fuel
+            fuelValue.textContent = `${gameState.fuel}%`;
+            fuelBar.style.width = `${gameState.fuel}%`;
+            
+            // Update distance
+            distanceValue.textContent = `${gameState.distance}/${gameState.maxDistance}`;
+            distanceBar.style.width = `${(gameState.distance / gameState.maxDistance) * 100}%`;
+            
+            // Update weight
+            weightValue.textContent = `${gameState.weight}%`;
+            
+            // Update cargo delivered
+            cargoDelivered.textContent = `${gameState.cargoDelivered}/${gameState.cargoRequired}`;
+            
+            // Update ship integrity
+            integrityValue.textContent = `${gameState.shipIntegrity}%`;
+            
+            // Update phase indicator
+            if (gameState.phase === 'decision') {
+                phaseDecision.classList.add('active');
+                phaseTravel.classList.remove('active');
+            } else {
+                phaseDecision.classList.remove('active');
+                phaseTravel.classList.add('active');
+            }
+            
+            // Update ship position
+            updateShipPosition();
+        }
+
+        // Render ship parts
+        function renderShipParts() {
+            shipPartsContainer.innerHTML = '';
+            gameState.shipParts.forEach(part => {
+                const partElement = document.createElement('div');
+                partElement.className = `ship-part ${part.active ? '' : 'jettisoned'}`;
+                partElement.innerHTML = `
+                    <div class="ship-part-icon">${part.icon}</div>
+                    <div>${part.name}</div>
+                    <div>${part.weight}% weight</div>
+                `;
+                
+                if (part.active) {
+                    partElement.addEventListener('click', () => jettisonPart(part.id));
+                }
+                
+                shipPartsContainer.appendChild(partElement);
+            });
+        }
+
+        // Render cargo items
+        function renderCargo() {
+            cargoList.innerHTML = '';
+            gameState.cargo.forEach(item => {
+                if (!item.jettisoned) {
+                    const cargoElement = document.createElement('div');
+                    cargoElement.className = 'cargo-item';
+                    cargoElement.innerHTML = `
+                        <span>${item.name} (Value: ${item.value}, Weight: ${item.weight}%)</span>
+                        <button class="jettison-btn" data-id="${item.id}">Jettison</button>
+                    `;
+                    cargoList.appendChild(cargoElement);
+                }
+            });
+            
+            // Add event listeners to jettison buttons
+            document.querySelectorAll('.jettison-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    jettisonCargo(id);
+                });
+            });
+        }
+
+        // Show cargo selection for jettisoning
+        function showCargoSelection() {
+            // In a full implementation, this would highlight cargo items
+            // For now, we'll just jettison a random cargo item
+            const availableCargo = gameState.cargo.filter(item => !item.jettisoned);
+            if (availableCargo.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableCargo.length);
+                jettisonCargo(availableCargo[randomIndex].id);
+            }
+        }
+
+        // Show parts selection for jettisoning
+        function showPartsSelection() {
+            // In a full implementation, this would highlight ship parts
+            // For now, we'll just jettison a random ship part
+            const availableParts = gameState.shipParts.filter(part => part.active);
+            if (availableParts.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableParts.length);
+                jettisonPart(availableParts[randomIndex].id);
+            }
+        }
+
+        // Jettison a cargo item
+        function jettisonCargo(id) {
+            const cargoItem = gameState.cargo.find(item => item.id === id);
+            if (cargoItem && !cargoItem.jettisoned) {
+                cargoItem.jettisoned = true;
+                gameState.weight -= cargoItem.weight;
+                
+                // Visual effect
+                const cargoElement = document.querySelector(`.jettison-btn[data-id="${id}"]`).parentElement;
+                const rect = cargoElement.getBoundingClientRect();
+                createFloatingCargo(rect.left, rect.top, cargoItem.name);
+                
+                // Update UI
+                renderCargo();
+                updateUI();
+                
+                // Move to travel phase after a delay
+                setTimeout(startTravelPhase, 1000);
+            }
+        }
+
+        // Jettison a ship part
+        function jettisonPart(id) {
+            const part = gameState.shipParts.find(p => p.id === id);
+            if (part && part.active) {
+                part.active = false;
+                gameState.weight -= part.weight;
+                
+                // Visual effect
+                const partElement = document.querySelectorAll('.ship-part')[id-1];
+                createShipDamage(partElement.getBoundingClientRect().left, partElement.getBoundingClientRect().top);
+                
+                // Update UI
+                renderShipParts();
+                updateUI();
+                
+                // Move to travel phase after a delay
+                setTimeout(startTravelPhase, 1000);
+            }
+        }
+
+        // Create floating cargo animation
+        function createFloatingCargo(x, y, name) {
+            const floatingCargo = document.createElement('div');
+            floatingCargo.className = 'cargo-floating';
+            floatingCargo.textContent = '📦';
+            floatingCargo.style.left = `${x}px`;
+            floatingCargo.style.top = `${y}px`;
+            document.body.appendChild(floatingCargo);
+            
+            setTimeout(() => {
+                document.body.removeChild(floatingCargo);
+            }, 2000);
+        }
+
+        // Create ship damage animation
+        function createShipDamage(x, y) {
+            const damage = document.createElement('div');
+            damage.className = 'ship-damage';
+            damage.textContent = '💥';
+            damage.style.left = `${x}px`;
+            damage.style.top = `${y}px`;
+            document.body.appendChild(damage);
+            
+            setTimeout(() => {
+                document.body.removeChild(damage);
+            }, 500);
+        }
+
+        // Start the travel phase
+        function startTravelPhase() {
+            gameState.phase = 'travel';
+            updateUI();
+            
+            // Hide decision panel, show event panel
+            decisionPanel.classList.add('hidden');
+            eventPanel.classList.remove('hidden');
+            
+            // Trigger a random event
+            triggerRandomEvent();
+        }
+
+        // Trigger a random event
+        function triggerRandomEvent() {
+            const randomEventIndex = Math.floor(Math.random() * gameState.events.length);
+            gameState.currentEvent = gameState.events[randomEventIndex];
+            
+            eventTitle.textContent = gameState.currentEvent.title;
+            eventDescription.textContent = gameState.currentEvent.description;
+            eventChoice1.textContent = gameState.currentEvent.choices[0].text;
+            eventChoice2.textContent = gameState.currentEvent.choices[1].text;
+        }
+
+        // Handle event choice
+        function handleEventChoice(choiceIndex) {
+            const choice = gameState.currentEvent.choices[choiceIndex];
+            
+            // Apply fuel cost
+            gameState.fuel -= choice.fuelCost;
+            
+            // Apply damage if any
+            if (choice.damage) {
+                gameState.shipIntegrity -= choice.damage;
+            }
+            
+            // Apply cargo loss if any
+            if (choice.cargoLoss) {
+                // In a full implementation, this would remove specific cargo
+                // For now, we'll just reduce the cargo delivered count
+                gameState.cargoDelivered = Math.max(0, gameState.cargoDelivered - choice.cargoLoss);
+            }
+            
+            // Update UI
+            updateUI();
+            
+            // Check for game over
+            if (gameState.fuel <= 0 || gameState.shipIntegrity <= 0) {
+                endGame(false);
+                return;
+            }
+            
+            // Move forward
+            gameState.distance += 20;
+            
+            // Check if destination reached
+            if (gameState.distance >= gameState.maxDistance) {
+                endGame(true);
+                return;
+            }
+            
+            // Return to decision phase
+            setTimeout(() => {
+                gameState.phase = 'decision';
+                decisionPanel.classList.remove('hidden');
+                eventPanel.classList.add('hidden');
+                updateUI();
+            }, 1500);
+        }
+
+        // End the game
+        function endGame(success) {
+            // Calculate score
+            let score = gameState.cargoDelivered * 10;
+            if (success) {
+                score += 100; // Bonus for reaching destination
+                score += gameState.fuel; // Bonus for remaining fuel
+                score += gameState.shipIntegrity; // Bonus for ship integrity
+            }
+            
+            gameState.score = score;
+            
+            // Show game over screen
+            gameOverScreen.classList.remove('hidden');
+            if (success) {
+                gameOverTitle.textContent = "Mission Successful!";
+                gameOverMessage.textContent = `You delivered ${gameState.cargoDelivered} units of cargo to the planet.`;
+            } else {
+                if (gameState.fuel <= 0) {
+                    gameOverTitle.textContent = "Out of Fuel!";
+                    gameOverMessage.textContent = "Your ship ran out of fuel before reaching the destination.";
+                } else {
+                    gameOverTitle.textContent = "Ship Destroyed!";
+                    gameOverMessage.textContent = "Your ship sustained too much damage to continue.";
+                }
+            }
+            finalScore.textContent = score;
+        }
+
+        // Reset the game
+        function resetGame() {
+            // Reset game state
+            gameState.fuel = 100;
+            gameState.distance = 0;
+            gameState.weight = 100;
+            gameState.cargoDelivered = 0;
+            gameState.shipIntegrity = 100;
+            gameState.phase = 'decision';
+            gameState.score = 0;
+            
+            // Reset cargo
+            gameState.cargo.forEach(item => {
+                item.jettisoned = false;
+            });
+            
+            // Reset ship parts
+            gameState.shipParts.forEach(part => {
+                part.active = true;
+            });
+            
+            // Hide game over screen
+            gameOverScreen.classList.add('hidden');
+            
+            // Show decision panel
+            decisionPanel.classList.remove('hidden');
+            eventPanel.classList.add('hidden');
+            
+            // Update UI
+            updateUI();
+            renderShipParts();
+            renderCargo();
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

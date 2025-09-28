@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargo or Survival</title>
+    <style>
+        body { margin: 0; background: black; }
+        canvas { display: block; margin: 0 auto; }
+        /* Add a subtle glow to the canvas for wow effect */
+        #gameCanvas {
+            box-shadow: 0 0 40px 10px #00f6ff88, 0 0 120px 40px #fff2;
+            background: radial-gradient(ellipse at center, #111 0%, #000 100%);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game variables
+        let fuel = 50;
+        let weight = 100;
+        let cargo = 50;
+        let minCargo = 20;
+        let shields = true;
+        let thrusters = true;
+        let distance = 0;
+        let totalDistance = 100;
+        let gameOver = false;
+        let message = '';
+        let particles = [];
+
+        // Create particles for jettison animation (rocket parts or cargo)
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x,
+                    y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 60 + Math.random() * 40,
+                    size: 5 + Math.random() * 5,
+                    color
+                });
+            }
+        }
+
+        // Update and draw particles
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.size *= 0.98;
+                return p.life > 0;
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            });
+        }
+
+        // Parallax stars
+        if (!window.stars) {
+            window.stars = [];
+            for (let i = 0; i < 200; i++) {
+                window.stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    speed: 0.2 + Math.random() * 1.2 // Parallax speed
+                });
+            }
+        }
+
+        // Rocket animation state
+        let flameFrame = 0;
+
+        // Draw function
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw animated parallax star background
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            window.stars.forEach(star => {
+                // Parallax: stars move left as rocket "moves right"
+                star.x -= star.speed * (distance / totalDistance) * 0.5 + 0.5;
+                if (star.x < 0) star.x = canvas.width;
+                ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.5 * Math.random()})`;
+                ctx.fillRect(star.x, star.y, 1.5, 1.5);
+            });
+
+            // Calculate rocket position based on distance
+            const rocketStartX = 150;
+            const rocketEndX = 600;
+            const rocketY = 250;
+            const rocketX = rocketStartX + ((rocketEndX - rocketStartX) * (distance / totalDistance));
+
+            // Draw rocket body (with a subtle glow)
+            ctx.save();
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'silver';
+            ctx.beginPath();
+            ctx.moveTo(rocketX, rocketY); // Nose
+            ctx.lineTo(rocketX - 50, rocketY + 50); // Top left
+            ctx.lineTo(rocketX - 25, rocketY + 100); // Top right
+            ctx.lineTo(rocketX + 25, rocketY + 100); // Rear
+            ctx.lineTo(rocketX + 50, rocketY + 50); // Bottom right
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // Animated thruster flame (wow!)
+            if (thrusters) {
+                flameFrame++;
+                const flameHeight = 60 + Math.sin(flameFrame / 3) * 15 + Math.random() * 10;
+                const flameColors = ['#ff0', '#fa0', '#f00', '#fff'];
+                for (let i = 0; i < 3; i++) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.7 - i * 0.2;
+                    ctx.beginPath();
+                    ctx.moveTo(rocketX - 10 + i * 10, rocketY + 100);
+                    ctx.lineTo(rocketX - 15 + i * 15, rocketY + 100 + flameHeight + i * 10);
+                    ctx.lineTo(rocketX + 10 - i * 10, rocketY + 100);
+                    ctx.closePath();
+                    ctx.fillStyle = flameColors[i];
+                    ctx.shadowColor = flameColors[i];
+                    ctx.shadowBlur = 20 - i * 5;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // Shields (animated pulse if active)
+            if (shields) {
+                ctx.save();
+                ctx.strokeStyle = `rgba(0,180,255,${0.5 + 0.3 * Math.sin(flameFrame / 10)})`;
+                ctx.lineWidth = 7 + 2 * Math.sin(flameFrame / 10);
+                ctx.beginPath();
+                ctx.ellipse(rocketX, rocketY + 60, 70, 65, 0, 0, 2 * Math.PI);
+                ctx.shadowColor = '#0ff';
+                ctx.shadowBlur = 18;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Draw cargo boxes on rocket (animated drop-in)
+            let cargoX = rocketX - 30;
+            for (let i = 0; i < Math.floor(cargo / 10); i++) {
+                ctx.save();
+                ctx.fillStyle = 'saddlebrown';
+                ctx.globalAlpha = 0.8 + 0.2 * Math.sin(flameFrame / 8 + i);
+                ctx.fillRect(cargoX, rocketY + 70, 18, 18);
+                ctx.restore();
+                cargoX += 22;
+            }
+
+            // Draw fuel bar (with glow)
+            ctx.save();
+            ctx.shadowColor = '#0f0';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = 'red';
+            if (fuel > 25) ctx.fillStyle = 'lime';
+            else if (fuel > 10) ctx.fillStyle = 'yellow';
+            ctx.fillRect(10, 10, (fuel / 50) * 200, 20);
+            ctx.restore();
+            ctx.strokeStyle = 'white';
+            ctx.strokeRect(10, 10, 200, 20);
+
+            // Draw stats
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Distance: ${distance}/${totalDistance}`, 10, 50);
+            ctx.fillText(`Cargo: ${cargo}`, 10, 70);
+            ctx.fillText(`Fuel: ${fuel.toFixed(1)}`, 10, 90);
+            ctx.fillText(`Weight: ${weight}`, 10, 110);
+            ctx.fillText(`Shields: ${shields ? 'Active' : 'Jettisoned'}`, 10, 130);
+            ctx.fillText(`Thrusters: ${thrusters ? 'Active' : 'Jettisoned'}`, 10, 150);
+
+            // Draw message (with wow effect)
+            ctx.save();
+            ctx.font = '24px Arial Black';
+            ctx.shadowColor = '#0ff';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(message, 250, 180);
+            ctx.restore();
+
+            // Draw buttons
+            if (!gameOver) {
+                drawButton('Sacrifice Cargo (-10)', 550, 400, 200, 50);
+                if (shields) {
+                    drawButton('Sacrifice Shields (-30 wt)', 550, 460, 200, 50);
+                }
+                if (thrusters) {
+                    drawButton('Sacrifice Thrusters (-20 wt)', 550, 520, 200, 50);
+                }
+                drawButton('Proceed (Travel 20 units)', 550, 580, 200, 50);
+            } else {
+                drawButton('Restart', 550, 300, 200, 50);
+            }
+
+            // Draw particles
+            drawParticles();
+
+            // Wow: If you win, show a spectacular planet arrival
+            if (gameOver && distance >= totalDistance && cargo >= minCargo) {
+                drawPlanetArrival();
+            }
+        }
+
+        // Draw button (add hover effect)
+        function drawButton(text, x, y, w, h) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,80,255,0.85)';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, w, h);
+            ctx.font = '18px Arial';
+            ctx.fillStyle = '#fff';
+            const textWidth = ctx.measureText(text).width;
+            ctx.fillText(text, x + (w - textWidth) / 2, y + h / 2 + 6);
+            ctx.restore();
+        }
+
+        // Draw spectacular planet arrival
+        function drawPlanetArrival() {
+            // Big glowing planet
+            ctx.save();
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.arc(rocketX + 180, rocketY + 80, 90 + 10 * Math.sin(flameFrame / 8), 0, 2 * Math.PI);
+            ctx.fillStyle = 'radial-gradient(circle at 0 0, #0ff 0%, #00f 80%, #000 100%)';
+            // Fallback for gradient
+            let grad = ctx.createRadialGradient(rocketX + 180, rocketY + 80, 30, rocketX + 180, rocketY + 80, 90);
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(0.3, '#0ff');
+            grad.addColorStop(0.7, '#00f');
+            grad.addColorStop(1, '#000');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = '#0ff';
+            ctx.shadowBlur = 60;
+            ctx.fill();
+            ctx.restore();
+
+            // Wow: fireworks
+            for (let i = 0; i < 8; i++) {
+                ctx.save();
+                ctx.strokeStyle = `hsl(${flameFrame * 10 + i * 45},100%,60%)`;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(rocketX + 180, rocketY + 80);
+                ctx.lineTo(
+                    rocketX + 180 + Math.cos(flameFrame / 10 + i) * (100 + Math.random() * 30),
+                    rocketY + 80 + Math.sin(flameFrame / 10 + i) * (100 + Math.random() * 30)
+                );
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // Update and draw particles
+        function updateParticles() {
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                p.size *= 0.98;
+                return p.life > 0;
+            });
+        }
+
+        // Reset game
+        function resetGame() {
+            fuel = 50;
+            weight = 100;
+            cargo = 50;
+            shields = true;
+            thrusters = true;
+            distance = 0;
+            gameOver = false;
+            message = 'Rocket relaunched. Good luck!';
+            particles = [];
+        }
+
+        // Travel logic
+        function travel() {
+            const segment = 20;
+            let burnRate = weight / 100;
+            if (!thrusters) burnRate *= 1.5; // Thrusters gone, burn fuel faster
+            const fuelBurn = segment * burnRate;
+            fuel -= fuelBurn;
+            distance += segment;
+            message = `Traveled ${segment} units. Burned ${fuelBurn.toFixed(1)} fuel.`;
+
+            if (fuel <= 0) {
+                fuel = 0;
+                gameOver = true;
+                message = 'Fuel exhausted! Rocket drifts in space... Game Over.';
+                return;
+            }
+
+            if (distance >= totalDistance) {
+                if (cargo >= minCargo) {
+                    gameOver = true;
+                    message = `Planet reached with ${cargo} cargo! You win! Score: ${Math.floor(fuel + cargo)}`;
+                } else {
+                    gameOver = true;
+                    message = `Planet reached, but only ${cargo} cargo (need ${minCargo}). Game Over.`;
+                }
+                return;
+            }
+
+            // Random asteroid event (50% chance)
+            if (Math.random() < 0.5) {
+                message += ' Asteroid field encountered!';
+                createParticles(400, 250, 'gray'); // Impact particles
+                // Audio: Play asteroid impact sound
+                if (shields) {
+                    message += ' Shields absorbed the impacts.';
+                } else {
+                    const extraBurn = 10 + Math.random() * 10;
+                    fuel -= extraBurn;
+                    message += ` No shields! Extra ${extraBurn.toFixed(1)} fuel burned from damage.`;
+                    if (fuel <= 0) {
+                        fuel = 0;
+                        gameOver = true;
+                        message += ' Fuel exhausted! Game Over.';
+                    }
+                }
+            } else {
+                message += ' Smooth segment.';
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            updateParticles();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+
+        // Add back the mouse click event handler
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            if (!gameOver) {
+                // Sacrifice Cargo button
+                if (mx > 550 && mx < 750 && my > 400 && my < 450) {
+                    if (cargo >= 10) {
+                        cargo -= 10;
+                        weight -= 10;
+                        createParticles(400, 225, 'brown');
+                        message = 'Cargo jettisoned into space!';
+                    } else {
+                        message = 'Not enough cargo to sacrifice!';
+                    }
+                }
+                // Sacrifice Shields button
+                else if (shields && mx > 550 && mx < 750 && my > 460 && my < 510) {
+                    shields = false;
+                    weight -= 30;
+                    createParticles(400, 250, 'blue');
+                    message = 'Shields jettisoned! Rocket is lighter.';
+                }
+                // Sacrifice Thrusters button
+                else if (thrusters && mx > 550 && mx < 750 && my > 520 && my < 570) {
+                    thrusters = false;
+                    weight -= 20;
+                    createParticles(290, 250, 'orange');
+                    message = 'Thrusters jettisoned! Fuel burns faster.';
+                }
+                // Proceed button
+                else if (mx > 550 && mx < 750 && my > 580 && my < 630) {
+                    travel();
+                }
+            } else {
+                // Restart button
+                if (mx > 550 && mx < 750 && my > 300 && my < 350) {
+                    resetGame();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

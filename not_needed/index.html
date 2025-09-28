@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cargo or Survival — MVP</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <header>
+      <h1>Cargo or Survival</h1>
+      <div id="hud">
+        <div>Fuel: <span id="fuelText">--</span></div>
+        <div>Distance: <span id="distanceText">--</span></div>
+        <div>Delivered: <span id="deliveredText">0</span></div>
+      </div>
+    </header>
+
+    <main>
+      <canvas id="stage" width="900" height="420"></canvas>
+
+      <aside id="controls">
+        <section class="card">
+          <h3>Ship Status</h3>
+          <div>Weight: <span id="weightText">--</span></div>
+          <div>Speed: <span id="speedText">--</span></div>
+          <div>Quota: <span id="quotaText">--</span></div>
+        </section>
+
+        <section class="card">
+          <h3>Cargo</h3>
+          <ul id="cargoList"></ul>
+        </section>
+
+        <section class="card">
+          <h3>Ship Parts</h3>
+          <ul id="partsList"></ul>
+        </section>
+
+        <section class="card">
+          <h3>Actions</h3>
+          <button id="startBtn">Start Run</button>
+          <button id="jettisonAllCargoBtn">Jettison All Cargo (panic)</button>
+          <button id="resetBtn">Reset</button>
+        </section>
+
+        <section class="card small">
+          <h4>Event Log</h4>
+          <div id="eventLog" class="log"></div>
+        </section>
+      </aside>
+    </main>
+
+    <div id="modal" class="hidden">
+      <div class="modal-card">
+        <h2 id="modalTitle">Decision</h2>
+        <p id="modalText"></p>
+        <div id="modalButtons"></div>
+      </div>
+    </div>
+
+    <footer>Made for hackathon MVP — zip and upload to itch.io</footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
